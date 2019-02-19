@@ -79,8 +79,8 @@ class DataFlowAnalysis {
 		// Edge to information map
 		std::map<Edge, Info *> EdgeToInfo;
 		// The bottom of the lattice
-    Info Bottom;
-    // The initial state of the analysis
+		Info Bottom;
+		// The initial state of the analysis
 		Info InitialState;
 		// EntryInstr points to the first instruction to be processed in the analysis
 		Instruction * EntryInstr;
@@ -270,15 +270,42 @@ class DataFlowAnalysis {
 
     	// (1) Initialize info of each edge to bottom
     	if (Direction)
-    		initializeForwardMap(func);
+    		initializeForwardMap(func);	
     	else
     		initializeBackwardMap(func);
 
     	assert(EntryInstr != nullptr && "Entry instruction is null.");
 
     	// (2) Initialize the work list
+    	for(auto node:IndexToInstr){
+    		worklist.push_back(node.first);
+    	}
 
     	// (3) Compute until the work list is empty
+    	while(!worklist.empty()){
+    		unsigned index = worklist.front();
+    		worklist.pop_front();
+    		if(index==0)
+    			continue;
+    		std::vector<unsigned> IncomingEdges;
+    		getIncomingEdges(index, &IncomingEdges);
+    		std::vector<Info *> Info_out;
+    		std::vector<unsigned> OutgoingEdges;
+    		getOutgoingEdges(index, &OutgoingEdges);
+    		flowfunction( IndexToInstr[index],IncomingEdges,OutgoingEdges,Info_out);
+    		for(unsigned i=0;i<Info_out.size();i++){
+    			Info * new_Info = new Info();
+    			Info::join(Info_out[i], EdgeToInfo[std::make_pair(index,OutgoingEdges[i])], new_Info);
+    			if(!Info::equals( EdgeToInfo[std::make_pair(index,OutgoingEdges[i])], new_Info)){
+    				EdgeToInfo[std::make_pair(index,OutgoingEdges[i])] = new_Info;
+    				worklist.push_back(OutgoingEdges[i]);	
+    			}
+
+    		}
+
+
+
+    	}
     }
 };
 
