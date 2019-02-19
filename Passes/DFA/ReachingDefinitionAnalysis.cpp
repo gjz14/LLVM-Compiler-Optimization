@@ -37,12 +37,47 @@ public:
 
 class ReachingDefinitionAnalysis : public DataFlowAnalysis <ReachingInfo, true>{
 private:
-	
+//	std::map<Edge, ReachingInfo *> EdgeToInfo;
+		// The bottom of the lattice
+//	ReachingInfo Bottom;
+		// The initial state of the analysis
+//	ReachingInfo InitialState;
+
 public:
+	std::map<std::string, int> categorymap = {{"br",2},{"switch",2},{"alloca",1},{"load",1},{"store",2},{"getelementptr",1},{"icmp",1},{"fcmp",1},{"phi",3},{"select",1}};
 	ReachingDefinitionAnalysis(ReachingInfo & bottom, ReachingInfo & initialState) :
     								 DataFlowAnalysis(bottom, initialState) {}
 
 	void flowfunction(Instruction * I,std::vector<unsigned> & IncomingEdges,std::vector<unsigned> & OutgoingEdges,std::vector<ReachingInfo *> & Infos) {
+		
+		std::string opName = I->getOpcodeName();
+		int category;
+		if(I->isBinaryOp())
+			category = 1;
+		else{
+			category = categorymap[opName];
+		}
+		ReachingInfo * new_Info = new ReachingInfo();
+		for(unsigned i=0;i<IncomingEdges.size();i++)
+			ReachingInfo::join(EdgeToInfo[std::make_pair(IncomingEdges[i],index)], new_Info, new_Info);
+		switch(category){
+			case 1:{
+				new_Info.Info_set.insert(InstrToIndex[I]);
+			}
+			case 2:{
+				
+			}
+			case 3:{
+				Instruction * firstNonPHI = I->getParent()->getFirstNonPHI();
+				unsigned firstNonPHIindex = InstrToIndex[firstNonPHI];
+				for(unsigned i=index;i<firstNonPHIindex;i++){
+					new_Info.Info_set.insert(i);
+				}
+			}
+		}
+		for(unsigned i=0;i<OutgoingEdges.size();i++)
+					Infos.push_back(new_Info);
+
 
 	}
 }
