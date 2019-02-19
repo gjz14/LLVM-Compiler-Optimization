@@ -3,6 +3,8 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Type.h"
 #include "231DFA.h"
+#include <set>
+
 
 using namespace llvm;
 using namespace std;
@@ -24,16 +26,16 @@ public:
 	}
 
 	static bool equals(ReachingInfo * info1, ReachingInfo * info2){
-		return info1.Info_set == info2.Info_set;
+		return info1->Info_set == info2->Info_set;
 	}
 
 	static ReachingInfo* join(ReachingInfo * info1, ReachingInfo * info2, ReachingInfo * result){
-		result.Info_set.insert(info1.Info_set.begin(), info1.Info_set.end());
-		result.Info_set.insert(info2.Info_set.begin(), info2.Info_set.end());
+		result->Info_set.insert(info1->Info_set.begin(), info1->Info_set.end());
+		result->Info_set.insert(info2->Info_set.begin(), info2->Info_set.end());
 		return result;
 	}
 
-}
+};
 
 class ReachingDefinitionAnalysis : public DataFlowAnalysis <ReachingInfo, true>{
 private:
@@ -49,7 +51,7 @@ public:
     								 DataFlowAnalysis(bottom, initialState) {}
 
 	void flowfunction(Instruction * I,std::vector<unsigned> & IncomingEdges,std::vector<unsigned> & OutgoingEdges,std::vector<ReachingInfo *> & Infos) {
-		
+		unsigned index = InstrToIndex[I];
 		std::string opName = I->getOpcodeName();
 		int category;
 		if(I->isBinaryOp())
@@ -62,7 +64,7 @@ public:
 			ReachingInfo::join(EdgeToInfo[std::make_pair(IncomingEdges[i],index)], new_Info, new_Info);
 		switch(category){
 			case 1:{
-				new_Info.Info_set.insert(InstrToIndex[I]);
+				new_Info->Info_set.insert(index);
 			}
 			case 2:{
 				
@@ -71,7 +73,7 @@ public:
 				Instruction * firstNonPHI = I->getParent()->getFirstNonPHI();
 				unsigned firstNonPHIindex = InstrToIndex[firstNonPHI];
 				for(unsigned i=index;i<firstNonPHIindex;i++){
-					new_Info.Info_set.insert(i);
+					new_Info->Info_set.insert(i);
 				}
 			}
 		}
@@ -80,7 +82,7 @@ public:
 
 
 	}
-}
+};
 
 
 namespace {

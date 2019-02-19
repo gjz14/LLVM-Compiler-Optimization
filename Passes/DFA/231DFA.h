@@ -70,7 +70,7 @@ class Info {
 template <class Info, bool Direction>
 class DataFlowAnalysis {
 
-  private:
+  public:
 		typedef std::pair<unsigned, unsigned> Edge;
 		// Index to instruction map
 		std::map<unsigned, Instruction *> IndexToInstr;
