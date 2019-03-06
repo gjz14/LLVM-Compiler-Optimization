@@ -74,22 +74,57 @@ public:
 				//new_Info->Info_set.insert(index);
 				new_Info->Info_set.insert(operands.begin(),operands.end());
 				new_Info->Info_set.erase(index);
+
+				for(unsigned i=0;i<OutgoingEdges.size();i++)
+					Infos.push_back(new_Info);
 			}
 			case 2:{
 				new_Info->Info_set.insert(operands.begin(),operands.end());	
+
+				for(unsigned i=0;i<OutgoingEdges.size();i++)
+					Infos.push_back(new_Info);
 			}
 			case 3:{
-				/*
+				
 				Instruction * firstNonPHI = I->getParent()->getFirstNonPHI();
 				unsigned firstNonPHIindex = InstrToIndex[firstNonPHI];
-				for(unsigned i=index;i<firstNonPHIindex;i++){
-					new_Info->Info_set.insert(i);
+
+				for (unsigned k=0; k<OutgoingEdges.size(); k++){
+					// join the incoming
+					LivenessInfo * out_k = new LivenessInfo(new_Info);
+					
+					for(unsigned i=index;i<firstNonPHIindex;i++){
+						Instruction * phiInstr_i = IndexToInstr[i];
+
+						// exclude variables defined at each phi instruction
+						out_k->Info_set.erase(i);
+
+						// iterate over values of the phi instruction
+
+						for(unsigned j=0;j < phiInstr_i->getNumIncomingValues();j++){
+
+							// caculate ValuetoInstr(v_ij)
+							Instruction * v_ij = (Instruction * ) phiInstr_i->getIncomingValue(j);
+							if(!InstrToIndex.contains(v_ij))
+								continue;
+
+							// get the basic block where v_ij is defined
+							BasicBlock* label_ij = phiInstr_i->getIncomingBlock(j);
+		                	 	
+							unsigned out_k = OutgoingEdges[k];    
+
+							// if v_ij is defined in its matching basic block, join v_ij  	
+		            		if(indexToInstr[OutgoingEdges[k]]->getParent() == label_ij) {
+									out_k->Info_set.insert(instrToIndex[v_ij]);	
+		            		
+						}
+					}
+					Infos.push_back(out_k);
 				}
-				*/
+
 			}
 		}
-		for(unsigned i=0;i<OutgoingEdges.size();i++)
-					Infos.push_back(new_Info);
+		
 	}
 
 
