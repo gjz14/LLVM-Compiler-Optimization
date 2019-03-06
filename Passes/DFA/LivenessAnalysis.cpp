@@ -66,7 +66,7 @@ public:
 		std::set<unsigned> operands;
 		for(unsigned i=0;i<I->getNumOperands();i++){
 			Instruction * ins = (Instruction *) I->getOperand(i);
-			if(InstrToIndex.contains(ins))
+			if(InstrToIndex.count(ins)>0)
 				operands.insert(InstrToIndex[ins]);
 		}
 		switch(category){
@@ -77,12 +77,14 @@ public:
 
 				for(unsigned i=0;i<OutgoingEdges.size();i++)
 					Infos.push_back(new_Info);
+				break;
 			}
 			case 2:{
 				new_Info->Info_set.insert(operands.begin(),operands.end());	
 
 				for(unsigned i=0;i<OutgoingEdges.size();i++)
 					Infos.push_back(new_Info);
+				break;
 			}
 			case 3:{
 				
@@ -91,7 +93,7 @@ public:
 
 				for (unsigned k=0; k<OutgoingEdges.size(); k++){
 					// join the incoming
-					LivenessInfo * out_k = new LivenessInfo(new_Info);
+					LivenessInfo * out_k = new LivenessInfo(*new_Info);
 					
 					for(unsigned i=index;i<firstNonPHIindex;i++){
 						Instruction * phiInstr_i = IndexToInstr[i];
@@ -101,33 +103,32 @@ public:
 
 						// iterate over values of the phi instruction
 
-						for(unsigned j=0;j < phiInstr_i->getNumIncomingValues();j++){
+						for(unsigned j=0;j < ((PHINode *) phiInstr_i)->getNumIncomingValues();j++){
 
 							// caculate ValuetoInstr(v_ij)
-							Instruction * v_ij = (Instruction * ) phiInstr_i->getIncomingValue(j);
-							if(!InstrToIndex.contains(v_ij))
+							Instruction * v_ij =  (Instruction *) ( ((PHINode *)  phiInstr_i)->getIncomingValue(j) );
+							if(InstrToIndex.count(v_ij)==0)
 								continue;
 
 							// get the basic block where v_ij is defined
-							BasicBlock* label_ij = phiInstr_i->getIncomingBlock(j);
+							BasicBlock* label_ij = ((PHINode *) phiInstr_i)->getIncomingBlock(j);
 		                	 	
-							unsigned out_k = OutgoingEdges[k];    
+							//unsigned out_k = OutgoingEdges[k];    
 
 							// if v_ij is defined in its matching basic block, join v_ij  	
-		            		if(indexToInstr[OutgoingEdges[k]]->getParent() == label_ij) {
-									out_k->Info_set.insert(instrToIndex[v_ij]);	
+		 	           		if(IndexToInstr[OutgoingEdges[k]]->getParent() == label_ij) 
+									out_k->Info_set.insert(InstrToIndex[v_ij]);	
 		            		
 						}
 					}
 					Infos.push_back(out_k);
 				}
+				break;
 
 			}
 		}
 		
 	}
-
-
 	
 };
 

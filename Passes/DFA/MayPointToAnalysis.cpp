@@ -3,7 +3,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Type.h"
 #include "231DFA.h"
-#include <std::set>
+#include <set>
 
 
 using namespace llvm;
@@ -20,11 +20,11 @@ public:
 
 	void print() {
 		for (auto ri : InfoMap) {
-			if (ri->second.size() == 0)
+			if (ri.second.size() == 0)
 				continue;
-			errs() << ri->first.first << ri->first.second << "->(";
+			errs() << ri.first.first << ri.first.second << "->(";
 
-			for (auto pointee : ri->second) {
+			for (auto pointee : ri.second) {
 				errs() << "M" << pointee << "/";
 			}
 			errs() << ")|";
@@ -61,7 +61,7 @@ public:
 		unsigned index = InstrToIndex[I];
 		std::string opName = I->getOpcodeName();
 		int category = 0;
-		if(categorymap.contains(opName))
+		if(categorymap.count(opName)>0)
 			category = categorymap[opName];
 		
 		MayPointToInfo * new_Info = new MayPointToInfo();
@@ -74,6 +74,7 @@ public:
 			case 1:{
 				//std::map<pair<char, unsigned>, std::set<unsigned>> tempmap;
 				new_Info->InfoMap[make_pair('R',index)].insert(index);
+				break;
 				
 			}
 			case 2:{
@@ -81,7 +82,7 @@ public:
 				unsigned v = InstrToIndex[(Instruction *) I->getOperand(0)];
 				std::set<unsigned> X = new_Info->InfoMap[make_pair('R',v)];
 				new_Info->InfoMap[make_pair('R',index)].insert(X.begin(),X.end());
-
+				break;
 				
 			}
 			case 3:{
@@ -89,7 +90,7 @@ public:
 				unsigned v = InstrToIndex[(Instruction*) rv];
 				std::set<unsigned> X = new_Info->InfoMap[make_pair('R',v)];
 				new_Info->InfoMap[make_pair('R',index)].insert(X.begin(),X.end());
-				
+				break;
 			}
 			case 4:{
 				Value * rp = ((LoadInst *) I)->getPointerOperand();
@@ -98,10 +99,10 @@ public:
 				std::set<unsigned> Y;
 				for(auto mi:X){
 					std::set<unsigned> tempres = new_Info->InfoMap[make_pair('M',mi)];
-					Y.insert(tempres.begin(),temp.end());
+					Y.insert(tempres.begin(),tempres.end());
 				}
-				new_Info->InfoMap[make_pair('R'),index].insert(Y.begin(),Y.end());
-
+				new_Info->InfoMap[make_pair('R',index)].insert(Y.begin(),Y.end());
+				break;
 			}
 			case 5:{
 				Value* rv = ((StoreInst*)I)->getValueOperand(); 
@@ -113,7 +114,7 @@ public:
 				for(auto mi:Y){
 					new_Info->InfoMap[make_pair('M',mi)].insert(X.begin(),X.end());
 				}
-
+				break;
 
 			}
 			case 6:{
@@ -125,7 +126,7 @@ public:
 				std::set<unsigned> X2 = new_Info->InfoMap[make_pair('R',i2)];
 				new_Info->InfoMap[make_pair('R',index)].insert(X1.begin(),X1.end());
 				new_Info->InfoMap[make_pair('R',index)].insert(X2.begin(),X2.end());
-
+				break;
 
 			}
 			case 7:{
@@ -133,14 +134,14 @@ public:
 				unsigned firstNonPHIindex = InstrToIndex[firstNonPHI];
 				for(unsigned i=index;i<firstNonPHIindex;i++){
 					Instruction * phiInstr_i = IndexToInstr[i];
-					for(unsigned j=0;j < phiInstr_i->getNumIncomingValues();j++){
-						Instruction * v_ij = (Instruction * ) phiInstr_i->getIncomingValue(j);
+					for(unsigned j=0;j < ((PHINode *) phiInstr_i)->getNumIncomingValues();j++){
+						Instruction * v_ij = (Instruction * ) (((PHINode *) phiInstr_i)->getIncomingValue(j));
 						unsigned ij = InstrToIndex[v_ij];
 						std::set<unsigned> X  = new_Info->InfoMap[make_pair('R',ij)];
 						new_Info->InfoMap[make_pair('R',i)].insert(X.begin(),X.end());
 					}
 				}
-
+				break;
 			}
 			default:{
 

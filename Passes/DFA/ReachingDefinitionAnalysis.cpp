@@ -65,16 +65,17 @@ public:
 		switch(category){
 			case 1:{
 				new_Info->Info_set.insert(index);
+				break;
 			}
-			case 2:{
-				
-			}
+			case 2:
+			
 			case 3:{
 				Instruction * firstNonPHI = I->getParent()->getFirstNonPHI();
 				unsigned firstNonPHIindex = InstrToIndex[firstNonPHI];
 				for(unsigned i=index;i<firstNonPHIindex;i++){
 					new_Info->Info_set.insert(i);
 				}
+				break;
 			}
 		}
 		for(unsigned i=0;i<OutgoingEdges.size();i++)
