@@ -57,7 +57,10 @@ public:
 		if(I->isBinaryOp())
 			category = 1;
 		else{
-			category = categorymap[opName];
+			if(categorymap.count(opName))
+				category = categorymap[opName];
+			else
+				category = 2;
 		}
 		LivenessInfo * new_Info = new LivenessInfo();
 		for(unsigned i=0;i<IncomingEdges.size();i++)
@@ -66,7 +69,7 @@ public:
 		std::set<unsigned> operands;
 		for(unsigned i=0;i<I->getNumOperands();i++){
 			Instruction * ins = (Instruction *) I->getOperand(i);
-			if(InstrToIndex.count(ins)>0)
+			if(InstrToIndex.count(ins))
 				operands.insert(InstrToIndex[ins]);
 		}
 		switch(category){
@@ -117,14 +120,16 @@ public:
 							//unsigned out_k = OutgoingEdges[k];    
 
 							// if v_ij is defined in its matching basic block, join v_ij  	
-		 	           		if(IndexToInstr[OutgoingEdges[k]]->getParent() == label_ij) 
+		 	           		if(IndexToInstr[OutgoingEdges[k]]->getParent() == label_ij) {
 								out_k->Info_set.insert(InstrToIndex[v_ij]);	
+								break;
+		 	           		}
 		            		
 						}
 					}
 					Infos.push_back(out_k);
 				}
-				break;
+				//break;
 
 			}
 		}
