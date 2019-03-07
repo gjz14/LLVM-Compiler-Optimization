@@ -37,7 +37,7 @@ public:
 
 };
 
-class  LivenessAnalysis : public DataFlowAnalysis <LivenessInfo, true>{
+class  LivenessAnalysis : public DataFlowAnalysis <LivenessInfo, false>{
 private:
 //	std::map<Edge, LivenessInfo *> EdgeToInfo;
 		// The bottom of the lattice
@@ -93,7 +93,8 @@ public:
 
 				for (unsigned k=0; k<OutgoingEdges.size(); k++){
 					// join the incoming
-					LivenessInfo * out_k = new LivenessInfo(*new_Info);
+					LivenessInfo * out_k = new LivenessInfo();
+					LivenessInfo::join(new_Info,  out_k, out_k);
 					
 					for(unsigned i=index;i<firstNonPHIindex;i++){
 						Instruction * phiInstr_i = IndexToInstr[i];
@@ -117,7 +118,7 @@ public:
 
 							// if v_ij is defined in its matching basic block, join v_ij  	
 		 	           		if(IndexToInstr[OutgoingEdges[k]]->getParent() == label_ij) 
-									out_k->Info_set.insert(InstrToIndex[v_ij]);	
+								out_k->Info_set.insert(InstrToIndex[v_ij]);	
 		            		
 						}
 					}
