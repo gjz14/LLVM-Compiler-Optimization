@@ -228,15 +228,13 @@ class DataFlowAnalysis {
 
 				Instruction * firstInstr = &(block->front());
 
-				// Initialize outgoing edges of the basic block
-				for (auto pi = pred_begin(block), pe = pred_end(block); pi != pe; ++pi) {
-					BasicBlock * prev = *pi;
-					Instruction * src = firstInstr;
-					Instruction * dst = (Instruction *)prev->getTerminator();
-					addEdge(src, dst, &Bottom);
+				// Initialize incoming edges to the basic block
+				Instruction * term = (Instruction *)block->getTerminator();
+				for (auto si = succ_begin(block), se = succ_end(block); si != se; ++si) {
+					BasicBlock * succ = *si;
+					Instruction * next = &(succ->front());
+					addEdge(next, term, &Bottom);
 				}
-
-				
 
 				// If there is phi node, add an edge from the first non-phi node to the first phi node instruction in the basic block.
 				if (isa<PHINode>(firstInstr)) {
@@ -248,25 +246,22 @@ class DataFlowAnalysis {
 					Instruction * instr = &*ii;
 					if (isa<PHINode>(instr))
 						continue;
-					if (instr == (Instruction *)block->getTerminator()) {
-						if((*instr).getOpcode() == 1) {
-							//EntryInstr = instr;
-							addEdge(nullptr, instr, &InitialState);
-						}
-						break;
+					if (isa<ReturnInst>(instr)) {
+						addEdge(nullptr, instr, &Bottom);
 					}
+					if (instr == (Instruction *)block->getTerminator()) 
+						break;
 					Instruction * next = instr->getNextNode();
 					addEdge(next, instr, &Bottom);
 				}
 
-				// Initialize incoming edges to the basic block
-				Instruction * term = (Instruction *)block->getTerminator();
-				for (auto si = succ_begin(block), se = succ_end(block); si != se; ++si) {
-					BasicBlock * succ = *si;
-					Instruction * next = &(succ->front());
-					addEdge(next, term, &Bottom);
+				// Initialize outgoing edges of the basic block
+				for (auto pi = pred_begin(block), pe = pred_end(block); pi != pe; ++pi) {
+					BasicBlock * prev = *pi;
+					Instruction * src = firstInstr;
+					Instruction * dst = (Instruction *)prev->getTerminator();
+					addEdge(src, dst, &Bottom);
 				}
-				
 			}
 			return;
 

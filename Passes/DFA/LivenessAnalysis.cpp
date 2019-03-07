@@ -96,8 +96,8 @@ public:
 
 				for (unsigned k=0; k<OutgoingEdges.size(); k++){
 					// join the incoming
-					LivenessInfo * out_k = new LivenessInfo();
-					LivenessInfo::join(new_Info,  out_k, out_k);
+					LivenessInfo * out_k = new LivenessInfo(*new_Info);
+					
 					
 					for(unsigned i=index;i<firstNonPHIindex;i++){
 						Instruction * phiInstr_i = IndexToInstr[i];
